@@ -65,6 +65,13 @@ workflows:
       - name: Criar Build iOS
         script: |
           echo "Iniciando build iOS com EAS CLI..."
+
+          echo "Navegando para o diretório do projeto: $CM_BUILD_DIR"
+          cd $CM_BUILD_DIR
+          # Se o seu projeto estiver em um subdiretório como 'my_simple_rn_app'
+          cd my_simple_rn_app # <--- ADICIONE ESTA LINHA COM O NOME DO SEU SUBDIRETÓRIO
+          echo "Diretório atual: $(pwd)"
+
           eas build -p ios --profile production --non-interactive || { echo "Falha ao iniciar o build EAS CLI."; exit 1; }
           echo "Build iOS iniciado. O artefato .ipa será gerado pelo EAS."
 
