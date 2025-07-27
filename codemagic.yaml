@@ -6,19 +6,24 @@ workflows:
     # Tipo de instância para o build. mac_mini_m2 é recomendado para iOS.
     instance_type: mac_mini_m2
 
-    # REMOVA TODA A SEÇÃO 'environment:' SE ELA ESTIVER VAZIA OU SÓ TIVER COMENTÁRIOS
+    # Se você não tem variáveis de ambiente seguras customizadas (como EAS_TOKEN)
+    # configuradas no Codemagic UI, REMOVA TODA A SEÇÃO 'environment:'
+    # Se você tem, mantenha-a e liste-as aqui:
+    # environment:
+    #   eas_token: $EAS_TOKEN # Exemplo: SE VOCÊ CONFIGUROU $EAS_TOKEN NO CODEMAGIC UI
 
     # Seções de scripts que definem os passos do build
     scripts:
       # 1. Configurar Node.js (AGORA ESSA SERÁ A ÚNICA ETAPA QUE INSTALA O NODE)
-      - name: Configurar Node.js 18.x
+      - name: Configurar Node.js (LTS)
         script: |
           echo "********** INICIANDO CONFIGURAÇÃO DO NODE.JS **********"
           echo "Verificando se 'n' está instalado e instalando se necessário..."
           npm install -g n || { echo "Falha ao instalar 'n'. Verifique permissões ou conectividade."; exit 1; }
           
-          echo "Tentando instalar Node.js 18.x usando 'n'..."
-          n 18.x || { echo "Falha ao instalar Node.js 18.x usando 'n'. Verifique logs acima para detalhes."; exit 1; }
+          echo "Tentando instalar a versão LTS do Node.js usando 'n'..."
+          # MUDANÇA AQUI: de '18.x' para 'lts'
+          n lts || { echo "Falha ao instalar Node.js LTS usando 'n'. Verifique logs acima para detalhes."; exit 1; }
           
           echo "Verificando versões instaladas..."
           node -v
