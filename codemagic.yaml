@@ -6,14 +6,7 @@ workflows:
     # Tipo de instância para o build. mac_mini_m2 é recomendado para iOS.
     instance_type: mac_mini_m2
 
-    # Configurações de ambiente para o build
-    environment:
-      # REMOVA A LINHA ABAIXO se ela estiver aqui!
-      # node: 18.x 
-      
-      # Mantenha suas outras variáveis de ambiente seguras (EAS_USERNAME, EAS_PASSWORD, EAS_TOKEN, etc.) aqui.
-      # Exemplo:
-      # eas_token: $EAS_TOKEN
+    # REMOVA TODA A SEÇÃO 'environment:' SE ELA ESTIVER VAZIA OU SÓ TIVER COMENTÁRIOS
 
     # Seções de scripts que definem os passos do build
     scripts:
@@ -40,18 +33,23 @@ workflows:
           echo "Dependências instaladas."
 
       # 3. Configurar EAS CLI e fazer login (se necessário para seu workflow EAS)
+      # Remova ou comente esta seção se você não estiver usando EAS CLI ou não tiver as variáveis de ambiente configuradas
       - name: Fazer login no EAS CLI
         script: |
           echo "Configurando e fazendo login no EAS CLI..."
           npm install -g eas-cli # Garante que o EAS CLI está instalado
+          # **CUIDADO:** Se você não tem $EAS_TOKEN configurado no Codemagic UI, essa linha vai falhar.
+          # Se não for usar EAS agora, COMENTE ou REMOVA esta linha:
           eas login --token $EAS_TOKEN # RECOMENDADO para CI/CD
-          # Ou: eas login --username $EAS_USERNAME --password $EAS_PASSWORD
           echo "Login no EAS CLI concluído."
 
       # 4. Executar o build iOS com EAS CLI
+      # Remova ou comente esta seção se você não estiver usando EAS CLI para o build
       - name: Criar Build iOS
         script: |
           echo "Iniciando build iOS com EAS CLI..."
+          # **CUIDADO:** Se você não tem EAS CLI configurado/logado, essa linha vai falhar.
+          # Se não for usar EAS agora, COMENTE ou REMOVA esta linha:
           eas build -p ios --profile production --non-interactive
           echo "Build iOS iniciado. O artefato .ipa será gerado pelo EAS."
 
