@@ -17,8 +17,8 @@ workflows:
       # Adicione este comando para navegar para o diretório raiz do seu repositório
       - name: Navegar para o diretório do projeto
         script: |
-          echo "Navegando para o diretório do projeto: $CM_BUILD_DIR"
-          cd $CM_BUILD_DIR
+          echo "Navegando para o diretório do projeto: my_simple_rn_app"
+          cd my_simple_rn_app
           echo "Diretório atual: $(pwd)" # Para depuração, mostra o diretório atual
 
       # 1. Configurar Node.js
