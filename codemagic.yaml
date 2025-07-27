@@ -6,15 +6,20 @@ workflows:
     # Tipo de instância para o build. mac_mini_m2 é recomendado para iOS.
     instance_type: mac_mini_m2
 
-    # Se você não tem variáveis de ambiente seguras customizadas (como EAS_TOKEN)
-    # configuradas no Codemagic UI, REMOVA TODA A SEÇÃO 'environment:'
-    # Se você tem, mantenha-a e liste-as aqui:
-    # environment:
-    #   eas_token: $EAS_TOKEN # Exemplo: SE VOCÊ CONFIGUROU $EAS_TOKEN NO CODEMAGIC UI
+    # **** ESTA SEÇÃO 'environment:' É CRUCIAL PARA INJETAR SEU TOKEN SEGURO ****
+    environment:
+      # Referencie sua variável segura aqui. Use o mesmo nome que você deu no painel do Codemagic.
+      # Se você nomeou como EXPO_TOKEN no Codemagic UI:
+      EXPO_TOKEN: $EXPO_TOKEN 
+      # Se você nomeou como EAS_TOKEN no Codemagic UI (menos comum para Expo, mas possível):
+      # EAS_TOKEN: $EAS_TOKEN 
+      
+      # Não precisa da linha 'node: 18.x' aqui, pois a instalação do Node.js
+      # está sendo gerenciada via script.
 
     # Seções de scripts que definem os passos do build
     scripts:
-      # 1. Configurar Node.js (AGORA ESSA SERÁ A ÚNICA ETAPA QUE INSTALA O NODE)
+      # 1. Configurar Node.js
       - name: Configurar Node.js (LTS)
         script: |
           echo "********** INICIANDO CONFIGURAÇÃO DO NODE.JS **********"
@@ -22,7 +27,6 @@ workflows:
           npm install -g n || { echo "Falha ao instalar 'n'. Verifique permissões ou conectividade."; exit 1; }
           
           echo "Tentando instalar a versão LTS do Node.js usando 'n'..."
-          # MUDANÇA AQUI: de '18.x' para 'lts'
           n lts || { echo "Falha ao instalar Node.js LTS usando 'n'. Verifique logs acima para detalhes."; exit 1; }
           
           echo "Verificando versões instaladas..."
@@ -37,25 +41,25 @@ workflows:
           npm install # Ou 'yarn install' se você usa yarn no seu projeto
           echo "Dependências instaladas."
 
-      # 3. Configurar EAS CLI e fazer login (se necessário para seu workflow EAS)
-      # Remova ou comente esta seção se você não estiver usando EAS CLI ou não tiver as variáveis de ambiente configuradas
+      # 3. Configurar EAS CLI e fazer login (AGORA USARÁ O TOKEN INJETADO)
       - name: Fazer login no EAS CLI
         script: |
           echo "Configurando e fazendo login no EAS CLI..."
           npm install -g eas-cli # Garante que o EAS CLI está instalado
-          # **CUIDADO:** Se você não tem $EAS_TOKEN configurado no Codemagic UI, essa linha vai falhar.
-          # Se não for usar EAS agora, COMENTE ou REMOVA esta linha:
-          eas login --token $EAS_TOKEN # RECOMENDADO para CI/CD
+          
+          # ESTA É A LINHA QUE USARÁ O TOKEN!
+          # O EAS CLI automaticamente pega a variável de ambiente EXPO_TOKEN se ela estiver definida.
+          # Não precisamos de 'eas login --token $EXPO_TOKEN' explicitamente aqui se a variável EXPO_TOKEN já estiver no ambiente.
+          # No entanto, para ser EXTREMAMENTE explícito e garantir que o login ocorra:
+          eas login --token $EXPO_TOKEN || { echo "Falha no login do EAS CLI. Verifique seu EXPO_TOKEN."; exit 1; }
+          
           echo "Login no EAS CLI concluído."
 
       # 4. Executar o build iOS com EAS CLI
-      # Remova ou comente esta seção se você não estiver usando EAS CLI para o build
       - name: Criar Build iOS
         script: |
           echo "Iniciando build iOS com EAS CLI..."
-          # **CUIDADO:** Se você não tem EAS CLI configurado/logado, essa linha vai falhar.
-          # Se não for usar EAS agora, COMENTE ou REMOVA esta linha:
-          eas build -p ios --profile production --non-interactive
+          eas build -p ios --profile production --non-interactive || { echo "Falha ao iniciar o build EAS CLI."; exit 1; }
           echo "Build iOS iniciado. O artefato .ipa será gerado pelo EAS."
 
     # Define onde o Codemagic deve procurar os artefatos gerados
