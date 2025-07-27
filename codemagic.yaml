@@ -6,6 +6,12 @@ workflows:
     # Tipo de instância para o build. mac_mini_m2 é recomendado para iOS.
     instance_type: mac_mini_m2
 
+    # **** ESTA É A SEÇÃO CRUCIAL QUE ESTAVA FALTANDO OU INCORRETA ****
+    environment:
+      # Use esta seção para carregar o grupo de variáveis 'teste'
+      groups:
+        - teste # Nome do seu grupo de variáveis de ambiente no Codemagic UI
+
     # Seções de scripts que definem os passos do build
     scripts:
       # 1. Configurar Node.js
@@ -30,7 +36,7 @@ workflows:
           npm install # Ou 'yarn install' se você usa yarn no seu projeto
           echo "Dependências instaladas."
 
-      # 3. Configurar EAS CLI e fazer login (AGORA COM TESTE DE VARIÁVEL E LOGIN EXPLÍCITO)
+      # 3. Configurar EAS CLI e fazer login (AGORA VAI PEGAR O TOKEN DO GRUPO 'teste')
       - name: Fazer login no EAS CLI
         script: |
           echo "Configurando e fazendo login no EAS CLI..."
@@ -38,13 +44,13 @@ workflows:
           
           # Depuração: Verificar se a variável EXPO_TOKEN está presente no ambiente
           if [ -z "$EXPO_TOKEN" ]; then
-            echo "ERRO CRÍTICO: Variável EXPO_TOKEN não encontrada no ambiente de build. Verifique as configurações do Codemagic!"
+            echo "ERRO CRÍTICO: Variável EXPO_TOKEN AINDA NÃO ENCONTRADA no ambiente de build. O grupo 'teste' está associado ao workflow?"
             exit 1
           else
             echo "Variável EXPO_TOKEN detectada (valor oculto por segurança)."
           fi
 
-          # Login explícito usando o token.
+          # Login explícito usando o token que agora deve estar no ambiente
           eas login --token $EXPO_TOKEN || { echo "Falha no login do EAS CLI com o token fornecido. Verifique se o token é válido e tem permissões."; exit 1; }
           
           echo "Login no EAS CLI concluído."
