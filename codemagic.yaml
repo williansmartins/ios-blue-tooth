@@ -1,5 +1,70 @@
+# Define o nome do workflow que aparecerá no Codemagic
 workflows:
-    sample-workflow:
-        name: Codemagic Sample Workflow
-        max_build_duration: 120
-        instance_type: mac_mini_m2
+  ios-app-build:
+    name: Build iOS App with Expo
+    # Especifica o tipo de projeto
+    instance_type: mac_mini_m2 # Ou mac_pro_m1, dependendo da sua preferência e recursos
+
+    environment:
+      # Definir as variáveis de ambiente necessárias
+      # Se você estiver usando Expo Managed Workflow, EAS CLI já deve vir pré-instalado.
+      # Se não, pode ser necessário instalá-lo: npm install -g eas-cli
+      
+      # Certifique-se de que a versão do Node.js e NPM/Yarn correspondem ao seu projeto
+      # Você pode ajustar esses valores
+      node: 18.x
+      flutter: latest # Para projetos Flutter, mas aqui estamos em RN. Pode remover se não for usar.
+      
+      # Variáveis de ambiente para credenciais de assinatura (MUITO IMPORTANTE!)
+      # NÃO COLOQUE CREDENCIAIS DIRETAMENTE AQUI. USE AS VARIÁVEIS DE AMBIENTE SEGURAS DO CODEMAGIC.
+      # Exemplo (NÃO ADICIONE ISSO AQUI, APENAS PARA ILUSTRAR):
+      # APPLE_ID: $APPLE_ID
+      # APPLE_PASSWORD: $APPLE_PASSWORD
+      # APP_SPECIFIC_PASSWORD: $APP_SPECIFIC_PASSWORD # Se tiver 2FA
+      # IOS_CERTIFICATE_P12: $CM_CERTIFICATE # Nome da variável no Codemagic
+      # IOS_CERTIFICATE_PASSWORD: $CM_CERTIFICATE_PASSWORD
+      # IOS_PROVISIONING_PROFILE: $CM_PROVISIONING_PROFILE
+
+    # Seções de scripts
+    scripts:
+      # 1. Instalar dependências (npm ou yarn)
+      - name: Install dependencies
+        script: |
+          npm install # Ou yarn install, dependendo do que você usa no seu projeto
+
+      # 2. Configurar o Expo (se você estiver usando Expo)
+      # Esta etapa é para garantir que o EAS CLI esteja pronto
+      - name: Configure Expo
+        script: |
+          npm install -g eas-cli # Garante que o EAS CLI está instalado
+          eas login --username $EAS_USERNAME --password $EAS_PASSWORD # Use variáveis de ambiente seguras do Codemagic
+          # Ou, se você usa tokens:
+          # eas login --token $EAS_TOKEN
+
+      # 3. Executar o build iOS com EAS CLI
+      # Substitua 'production' por 'development' ou 'staging' se tiver perfis diferentes
+      - name: Build iOS App
+        script: |
+          eas build -p ios --profile production --non-interactive
+
+    # O que fazer após o build
+    artifacts:
+      # Onde o Codemagic deve procurar os artefatos gerados.
+      # O EAS CLI geralmente coloca o .ipa em um diretório como `build/` ou o imprime o link.
+      # Você pode precisar ajustar isso para o caminho real do IPA gerado pelo EAS.
+      # No caso do EAS build, o artefato final é um link para o arquivo no Expo/Apple,
+      # mas o Codemagic ainda pode pegar outros logs ou arquivos.
+      - $CM_BUILD_DIR/**/*.ipa # Isso tenta capturar qualquer IPA gerado.
+      - $CM_BUILD_DIR/build/*.ipa # Exemplo de caminho comum
+      - /tmp/eas-build-archive/*.ipa # Às vezes o EAS coloca aqui
+      - ~/.npm/_logs/*.log # Captura logs de npm em caso de erro
+
+    # Notificações (opcional)
+    # notifications:
+    #   email:
+    #     recipients:
+    #       - seu_email@exemplo.com
+    #     success:
+    #       - email
+    #     failure:
+    #       - email
