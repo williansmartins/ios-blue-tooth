@@ -14,6 +14,13 @@ workflows:
 
     # Seções de scripts que definem os passos do build
     scripts:
+      # Adicione este comando para navegar para o diretório raiz do seu repositório
+      - name: Navegar para o diretório do projeto
+        script: |
+          echo "Navegando para o diretório do projeto: $CM_BUILD_DIR"
+          cd $CM_BUILD_DIR
+          echo "Diretório atual: $(pwd)" # Para depuração, mostra o diretório atual
+
       # 1. Configurar Node.js
       - name: Configurar Node.js (LTS)
         script: |
@@ -50,16 +57,12 @@ workflows:
             echo "Variável EXPO_TOKEN detectada (valor oculto por segurança). EAS CLI deve usá-la automaticamente."
           fi
 
-          # *** REMOVEMOS A LINHA eas login --token $EXPO_TOKEN AQUI! ***
-          # O EAS CLI agora usará automaticamente a variável de ambiente EXPO_TOKEN.
-          
           echo "Configuração do EAS CLI concluída. Autenticação esperada via EXPO_TOKEN."
 
       # 4. Executar o build iOS com EAS CLI
       - name: Criar Build iOS
         script: |
           echo "Iniciando build iOS com EAS CLI..."
-          # A autenticação já deve ter ocorrido via $EXPO_TOKEN no ambiente.
           eas build -p ios --profile production --non-interactive || { echo "Falha ao iniciar o build EAS CLI."; exit 1; }
           echo "Build iOS iniciado. O artefato .ipa será gerado pelo EAS."
 
