@@ -1,82 +1,67 @@
 # Define o nome do workflow que aparecerá no Codemagic
 workflows:
   ios-app-build:
-    name: Build iOS App with Expo (RN)
+    name: Build iOS App with Expo (RN) v2
 
     # Tipo de instância para o build. mac_mini_m2 é recomendado para iOS.
     instance_type: mac_mini_m2
 
     # Configurações de ambiente para o build
     environment:
-      # Definir as variáveis de ambiente para a versão do Node.js
-      # Usaremos o script para instalar, mas este aqui serve como fallback ou referência
-      node: 18.x 
+      # REMOVA A LINHA ABAIXO se ela estiver aqui!
+      # node: 18.x 
       
-      # Variáveis de ambiente seguras para suas credenciais EAS CLI (Expo Application Services)
-      # ESSAS VARIÁVEIS DEVEM SER DEFINIDAS NO CODEMAGIC UI (Settings > Environment variables)
-      # NUNCA COLOQUE VALORES REAIS AQUI NO ARQUIVO!
-      # Exemplo: EAS_USERNAME, EAS_PASSWORD, ou EAS_TOKEN
-      # eas_username: $EAS_USERNAME
-      # eas_password: $EAS_PASSWORD
+      # Mantenha suas outras variáveis de ambiente seguras (EAS_USERNAME, EAS_PASSWORD, EAS_TOKEN, etc.) aqui.
+      # Exemplo:
       # eas_token: $EAS_TOKEN
-
-      # Variáveis de ambiente seguras para assinatura iOS (se usar o método tradicional de .p12/.mobileprovision)
-      # Codemagic automaticamente mapeia seus uploads para essas variáveis
-      # Exemplo: CM_CERTIFICATE, CM_CERTIFICATE_PASSWORD, CM_PROVISIONING_PROFILE
-      # Isso será gerenciado na seção de Code Signing do Codemagic UI.
 
     # Seções de scripts que definem os passos do build
     scripts:
-      # 1. Configurar Node.js (explícito para depuração)
+      # 1. Configurar Node.js (AGORA ESSA SERÁ A ÚNICA ETAPA QUE INSTALA O NODE)
       - name: Configurar Node.js 18.x
         script: |
-          echo "Verificando Node.js..."
-          # Instala o 'n' (gerenciador de versões do Node.js) globalmente se não estiver presente
-          npm install -g n || true # '|| true' para não falhar se já estiver instalado
-          # Instala a versão 18.x do Node.js usando o 'n'
-          n 18.x
-          # Verifica a versão instalada para confirmar
+          echo "********** INICIANDO CONFIGURAÇÃO DO NODE.JS **********"
+          echo "Verificando se 'n' está instalado e instalando se necessário..."
+          npm install -g n || { echo "Falha ao instalar 'n'. Verifique permissões ou conectividade."; exit 1; }
+          
+          echo "Tentando instalar Node.js 18.x usando 'n'..."
+          n 18.x || { echo "Falha ao instalar Node.js 18.x usando 'n'. Verifique logs acima para detalhes."; exit 1; }
+          
+          echo "Verificando versões instaladas..."
           node -v
           npm -v
-          echo "Configuração do Node.js 18.x concluída."
+          echo "********** CONFIGURAÇÃO DO NODE.JS CONCLUÍDA **********"
 
       # 2. Instalar dependências do projeto (npm ou yarn)
       - name: Instalar dependências do projeto
         script: |
+          echo "Instalando dependências do projeto..."
           npm install # Ou 'yarn install' se você usa yarn no seu projeto
+          echo "Dependências instaladas."
 
       # 3. Configurar EAS CLI e fazer login (se necessário para seu workflow EAS)
-      # ESTA ETAPA SÓ É NECESSÁRIA SE VOCÊ ESTIVER USANDO EAS BUILD
-      # Certifique-se de ter as variáveis $EAS_USERNAME/$EAS_PASSWORD ou $EAS_TOKEN configuradas no Codemagic
       - name: Fazer login no EAS CLI
         script: |
+          echo "Configurando e fazendo login no EAS CLI..."
           npm install -g eas-cli # Garante que o EAS CLI está instalado
-          # Escolha uma das opções abaixo para login, dependendo de como você autentica no EAS
-          # Opção A: Login com usuário/senha (menos segura, mas simples)
-          # eas login --username $EAS_USERNAME --password $EAS_PASSWORD
-          # Opção B: Login com token (RECOMENDADO para CI/CD)
-          eas login --token $EAS_TOKEN
+          eas login --token $EAS_TOKEN # RECOMENDADO para CI/CD
+          # Ou: eas login --username $EAS_USERNAME --password $EAS_PASSWORD
           echo "Login no EAS CLI concluído."
 
       # 4. Executar o build iOS com EAS CLI
-      # '--profile production' usa o perfil 'production' definido no seu app.json/app.config.js do Expo.
-      # '--non-interactive' é crucial para builds em ambientes CI/CD.
       - name: Criar Build iOS
         script: |
+          echo "Iniciando build iOS com EAS CLI..."
           eas build -p ios --profile production --non-interactive
           echo "Build iOS iniciado. O artefato .ipa será gerado pelo EAS."
 
     # Define onde o Codemagic deve procurar os artefatos gerados
     artifacts:
-      # Para projetos Expo/EAS, o IPA é gerado e disponibilizado pelo próprio EAS.
-      # No entanto, o Codemagic pode tentar capturar arquivos de log ou outros artefatos.
-      # O IPA final é geralmente fornecido como um link do EAS nos logs de build.
-      - $CM_BUILD_DIR/**/*.ipa # Tenta capturar qualquer IPA que possa estar no diretório de build
-      - /tmp/eas-build-archive/*.ipa # Outro caminho comum onde EAS pode salvar
-      - ~/.npm/_logs/*.log # Captura logs de npm em caso de erro
+      - $CM_BUILD_DIR/**/*.ipa 
+      - /tmp/eas-build-archive/*.ipa
+      - ~/.npm/_logs/*.log
 
     # Notificações (opcional)
-    # Você pode configurar para receber e-mails em caso de sucesso ou falha no build
     # notifications:
     #   email:
     #     recipients:
