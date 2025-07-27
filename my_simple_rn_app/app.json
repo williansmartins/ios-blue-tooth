@@ -2,6 +2,12 @@
   "expo": {
     "name": "my_simple_rn_app",
     "slug": "my_simple_rn_app",
-    "version": "1.0.0"
+    "version": "1.0.0",
+    "extra": {
+      "eas": {
+        "projectId": "088c23cc-8a53-4ed7-bb14-e78a1bf6646c"
+      }
+    },
+    "owner": "williansmartins"
   }
 }
