@@ -6,7 +6,7 @@ workflows:
     # Tipo de instância para o build. mac_mini_m2 é recomendado para iOS.
     instance_type: mac_mini_m2
 
-    # **** ESTA É A SEÇÃO CRUCIAL QUE ESTAVA FALTANDO OU INCORRETA ****
+    # **** ESTA SEÇÃO 'environment:' É CRUCIAL PARA INJETAR SEU TOKEN SEGURO ****
     environment:
       # Use esta seção para carregar o grupo de variáveis 'teste'
       groups:
@@ -36,29 +36,30 @@ workflows:
           npm install # Ou 'yarn install' se você usa yarn no seu projeto
           echo "Dependências instaladas."
 
-      # 3. Configurar EAS CLI e fazer login (AGORA VAI PEGAR O TOKEN DO GRUPO 'teste')
-      - name: Fazer login no EAS CLI
+      # 3. Configurar EAS CLI (Login automático via EXPO_TOKEN)
+      - name: Configurar EAS CLI
         script: |
-          echo "Configurando e fazendo login no EAS CLI..."
-          npm install -g eas-cli # Garante que o EAS CLI está instalado
+          echo "Configurando EAS CLI..."
+          npm install -g eas-cli || { echo "Falha ao instalar eas-cli."; exit 1; } # Garante que o EAS CLI está instalado
           
           # Depuração: Verificar se a variável EXPO_TOKEN está presente no ambiente
           if [ -z "$EXPO_TOKEN" ]; then
-            echo "ERRO CRÍTICO: Variável EXPO_TOKEN AINDA NÃO ENCONTRADA no ambiente de build. O grupo 'teste' está associado ao workflow?"
+            echo "ERRO CRÍTICO: Variável EXPO_TOKEN não encontrada no ambiente de build. Verifique as configurações do Codemagic!"
             exit 1
           else
-            echo "Variável EXPO_TOKEN detectada (valor oculto por segurança)."
+            echo "Variável EXPO_TOKEN detectada (valor oculto por segurança). EAS CLI deve usá-la automaticamente."
           fi
 
-          # Login explícito usando o token que agora deve estar no ambiente
-          eas login --token $EXPO_TOKEN || { echo "Falha no login do EAS CLI com o token fornecido. Verifique se o token é válido e tem permissões."; exit 1; }
+          # *** REMOVEMOS A LINHA eas login --token $EXPO_TOKEN AQUI! ***
+          # O EAS CLI agora usará automaticamente a variável de ambiente EXPO_TOKEN.
           
-          echo "Login no EAS CLI concluído."
+          echo "Configuração do EAS CLI concluída. Autenticação esperada via EXPO_TOKEN."
 
       # 4. Executar o build iOS com EAS CLI
       - name: Criar Build iOS
         script: |
           echo "Iniciando build iOS com EAS CLI..."
+          # A autenticação já deve ter ocorrido via $EXPO_TOKEN no ambiente.
           eas build -p ios --profile production --non-interactive || { echo "Falha ao iniciar o build EAS CLI."; exit 1; }
           echo "Build iOS iniciado. O artefato .ipa será gerado pelo EAS."
 
