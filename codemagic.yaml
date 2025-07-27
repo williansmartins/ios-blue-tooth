@@ -1,7 +1,7 @@
 # Define o nome do workflow que aparecerá no Codemagic
 workflows:
   ios-app-build:
-    name: Build iOS App with Expo (RN) v2
+    name: Build iOS App with Expo (RN)
 
     # Tipo de instância para o build. mac_mini_m2 é recomendado para iOS.
     instance_type: mac_mini_m2
